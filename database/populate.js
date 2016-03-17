@@ -20,12 +20,27 @@ AddressModel.remove({}, function(err) {
   console.log('Addresses Collection Sanitized'); 
 });
 
+ServiceModel.remove({}, function(err) { 
+  if(err){
+      console.log(err);
+  }
+  console.log('Services Collection Sanitized'); 
+});
+
+PaymentModel.remove({}, function(err) { 
+  if(err){
+      console.log(err);
+  }
+  console.log('Payments Collection Sanitized'); 
+});
+
 let cash_payment = new PaymentModel({
     type: 'Cash',
     description: 'Given to Martin at house',
     amount: 10,
     date: Date.now()
 })
+cash_payment.save();
 
 let check_payment = new PaymentModel({
     type: 'Check',
@@ -33,12 +48,22 @@ let check_payment = new PaymentModel({
     amount: 20,
     date: Date.now()
 })
+check_payment.save();
 
 let service = new ServiceModel({
     description: 'Cut and Trim',
     cost: 35.00,
     date: Date.now()
 })
+
+let service2 = new ServiceModel({
+    description: 'Cut and Trim',
+    cost: 40.00,
+    date: Date.now()
+})
+
+service.save();
+service2.save();
 
 let address = new AddressModel({
     street: '2152 Prospect Ave.',
@@ -53,7 +78,7 @@ let address2 = new AddressModel({
     city: 'Cityville',
     state: 'PA',
     zip: '00000',
-    services: [service]
+    services: [service2]
 });
 
 address.save();

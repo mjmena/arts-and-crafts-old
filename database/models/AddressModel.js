@@ -6,7 +6,7 @@ let AddressSchema = new mongoose.Schema({
   city: String,
   state: String,
   zip: String,
-  services: [ServiceModel.schema]
+  services: [{type: mongoose.Schema.Types.ObjectId, ref: 'Service' }]
 });
 
 AddressSchema.set('toJSON', {getters: true});

@@ -3,17 +3,10 @@ import AddressModel from './AddressModel';
 import PaymentModel from './PaymentModel';
 
 let CustomerSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-    default: mongoose.Types.ObjectId
-  },
   name: String,
-  billing_address: {type: mongoose.Schema.Types.ObjectId, ref: 'Person' },
-  service_addresses: [{type: mongoose.Schema.Types.ObjectId, ref: 'Person' }],
-  payments: [PaymentModel.schema],
+  billing_address: {type: mongoose.Schema.Types.ObjectId, ref: 'Address' },
+  service_addresses: [{type: mongoose.Schema.Types.ObjectId, ref: 'Address' }],
+  payments: [{type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
   active: Boolean
 });
 

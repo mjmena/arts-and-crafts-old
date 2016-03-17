@@ -13,10 +13,10 @@ from 'graphql';
 import {
     connectionArgs,
     connectionDefinitions,
-    connectionFromArray,
     connectionFromPromisedArray,
     fromGlobalId,
-    globalIdField
+    globalIdField,
+    nodeDefinitions
 }
 from 'graphql-relay';
 
@@ -25,9 +25,59 @@ import AddressModel from './models/AddressModel';
 import ServiceModel from './models/ServiceModel';
 import PaymentModel from './models/PaymentModel';
 
-let PaymentType = new GraphQLObjectType({
+const {
+    nodeInterface, nodeField
+} = nodeDefinitions(
+    (globalId) => {
+        var {
+            type, id
+        } = fromGlobalId(globalId);
+        if (type === 'Customer') {
+            return CustomerModel.findOne({
+                _id: id
+            });
+        }
+        else if (type === 'Address') {
+            return AddressModel.findOne({
+                _id: id
+            });
+        }
+        else if (type === 'Service') {
+            return ServiceModel.findOne({
+                _id: id
+            });
+        }
+        else if (type === 'Payment') {
+            return PaymentModel.findOne({
+                _id: id
+            });
+        }
+        else {
+            return null;
+        }
+    }, (obj) => {
+        if (obj instanceof CustomerModel) {
+            return CustomerType;
+        }
+        else if (obj instanceof AddressModel) {
+            return AddressType;
+        }
+        else if (obj instanceof ServiceModel) {
+            return ServiceType;
+        }
+        else if (obj instanceof PaymentModel) {
+            return PaymentType;
+        }
+        else {
+            return null;
+        }
+    }
+);
+
+const PaymentType = new GraphQLObjectType({
     name: 'Payment',
     fields: {
+        id: globalIdField('Payment', payment => payment._id),
         type: {
             type: GraphQLString
         },
@@ -43,11 +93,22 @@ let PaymentType = new GraphQLObjectType({
                 return parent.date.toString();
             }
         }
-    }
+    },
+    interfaces: [nodeInterface],
 })
+
+const {
+    connectionType: PaymentConnection,
+    edgeType: PaymentEdge
+} = connectionDefinitions({
+    name: 'Payment',
+    nodeType: PaymentType
+});
+
 let ServiceType = new GraphQLObjectType({
     name: 'Service',
     fields: {
+        id: globalIdField('Service', service => service._id),
         description: {
             type: GraphQLString
         },
@@ -60,12 +121,22 @@ let ServiceType = new GraphQLObjectType({
                 return parent.date.toString();
             }
         }
-    }
+    },
+    interfaces: [nodeInterface],
 })
 
-let AddressType = new GraphQLObjectType({
+const {
+    connectionType: ServiceConnection,
+    edgeType: ServiceEdge
+} = connectionDefinitions({
+    name: 'Service',
+    nodeType: ServiceType
+});
+
+const AddressType = new GraphQLObjectType({
     name: 'Address',
     fields: {
+        id: globalIdField('Address', address => address._id),
         street: {
             type: GraphQLString
         },
@@ -79,21 +150,37 @@ let AddressType = new GraphQLObjectType({
             type: GraphQLString
         },
         services: {
-            type: new GraphQLList(ServiceType)
+            type: ServiceConnection,
+            args: connectionArgs,
+            resolve: (address, args) => {
+                let query = ServiceModel.find({
+                    _id: {
+                        $in: address.services
+                    }
+                }).sort({
+                    date: 1
+                });
+
+                return connectionFromPromisedArray(query, args)
+            }
         }
-    }
+    },
+    interfaces: [nodeInterface],
 })
 
 const {
-  connectionType: AddressConnection,
-  edgeType: AddressEdge,
-} = connectionDefinitions({name: 'Address', nodeType: AddressType});
+    connectionType: AddressConnection,
+    edgeType: AddressEdge,
+} = connectionDefinitions({
+    name: 'Address',
+    nodeType: AddressType
+});
 
 
 let CustomerType = new GraphQLObjectType({
     name: 'Customer',
     fields: {
-        id: globalIdField('Customer'),
+        id: globalIdField('Customer', customer => customer._id),
         name: {
             type: GraphQLString
         },
@@ -113,24 +200,40 @@ let CustomerType = new GraphQLObjectType({
                     _id: {
                         $in: customer.service_addresses
                     }
-                }).sort({city:1});
-                
-                return connectionFromPromisedArray(query,args)
+                }).sort({
+                    city: 1
+                });
+
+                return connectionFromPromisedArray(query, args)
             }
         },
         payments: {
-            type: new GraphQLList(PaymentType)
+            type: PaymentConnection,
+            args: connectionArgs,
+            resolve: (customer, args) => {
+                let query = PaymentModel.find({
+                    _id: {
+                        $in: customer.payments
+                    }
+                }).sort({
+                    date: -1
+                });
+
+                return connectionFromPromisedArray(query, args)
+            }
         },
         active: {
             type: GraphQLBoolean
         }
-    }
+    },
+    interfaces: [nodeInterface],
 });
 
 let schema = new GraphQLSchema({
     query: new GraphQLObjectType({
         name: 'Query',
         fields: {
+            node: nodeField,
             customers: {
                 type: new GraphQLList(CustomerType),
                 resolve: () => {
@@ -148,7 +251,7 @@ let schema = new GraphQLSchema({
                     id
                 }) => {
                     return CustomerModel.findOne({
-                        id: fromGlobalId(id).id
+                        _id: fromGlobalId(id).id
                     });
                 }
             },
