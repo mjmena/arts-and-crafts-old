@@ -1,0 +1,36 @@
+customer: {
+    name: "Name",
+    phone: "123-456-7890",
+    email: "email@website.com",
+    billing_address: {
+        street: "1234 Street",
+        city: "City",
+        state: "St",
+        zip: "12345",
+        phone: "123-456-7890"
+    },
+    service_addresses: [{
+        street: "1234 Street",
+        city: "City",
+        state: "St",
+        zip: "12345",
+        phone: "123-456-7890",
+        services: [{
+            description: "description",
+            cost: 35,
+            date: Date.now()
+        }]
+    }],
+    payments: [{
+        type: "Check",
+        description: "Check #",
+        amount: 35,
+        date: Date.now()
+    }, {
+        type: "Cash",
+        description: "",
+        amount: 35,
+        date: Date.now()
+    }],
+    active: true
+}
