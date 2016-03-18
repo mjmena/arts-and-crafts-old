@@ -4,7 +4,7 @@ import PaymentModel from './PaymentModel';
 
 let CustomerSchema = new mongoose.Schema({
   name: String,
-  billing_address: {type: mongoose.Schema.Types.ObjectId, ref: 'Address' },
+  billing_address: AddressModel.schema,
   service_addresses: [{type: mongoose.Schema.Types.ObjectId, ref: 'Address' }],
   payments: [{type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
   active: Boolean

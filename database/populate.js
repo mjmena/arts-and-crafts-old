@@ -3,6 +3,7 @@ import CustomerModel from './models/CustomerModel';
 import AddressModel from './models/AddressModel';
 import ServiceModel from './models/ServiceModel';
 import PaymentModel from './models/PaymentModel';
+import {Days} from '../utils/enums';
 
 mongoose.connect('mongodb://localhost/test');
 
@@ -66,6 +67,8 @@ service.save();
 service2.save();
 
 let address = new AddressModel({
+    description: 'House #1',
+    day: Days.MONDAY.name,
     street: '2152 Prospect Ave.',
     city: 'Croydon',
     state: 'PA',
@@ -74,6 +77,8 @@ let address = new AddressModel({
 });
 
 let address2 = new AddressModel({
+    description: 'House #2',
+    day: Days.TUESDAY.name,
     street: '123 Street St.',
     city: 'Cityville',
     state: 'PA',

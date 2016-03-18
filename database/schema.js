@@ -1,5 +1,6 @@
 import {
     GraphQLBoolean,
+    GraphQLEnumType,
     GraphQLFloat,
     GraphQLID,
     GraphQLList,
@@ -24,6 +25,8 @@ import CustomerModel from './models/CustomerModel';
 import AddressModel from './models/AddressModel';
 import ServiceModel from './models/ServiceModel';
 import PaymentModel from './models/PaymentModel';
+
+import {Days} from '../utils/enums';
 
 const {
     nodeInterface, nodeField
@@ -133,10 +136,22 @@ const {
     nodeType: ServiceType
 });
 
+var DayEnum = new GraphQLEnumType({
+  name: 'Day',
+  description: 'A Day of the Week',
+  values: Days
+});
+
 const AddressType = new GraphQLObjectType({
     name: 'Address',
     fields: {
         id: globalIdField('Address', address => address._id),
+        description: {
+            type: GraphQLString
+        },
+        day: {
+            type: GraphQLString,
+        },
         street: {
             type: GraphQLString
         },
@@ -177,7 +192,7 @@ const {
 });
 
 
-let CustomerType = new GraphQLObjectType({
+const CustomerType = new GraphQLObjectType({
     name: 'Customer',
     fields: {
         id: globalIdField('Customer', customer => customer._id),
@@ -185,12 +200,7 @@ let CustomerType = new GraphQLObjectType({
             type: GraphQLString
         },
         billing_address: {
-            type: AddressType,
-            resolve: (parent) => {
-                return AddressModel.findOne({
-                    _id: parent.billing_address
-                });
-            }
+            type: AddressType
         },
         service_addresses: {
             type: AddressConnection,
@@ -201,7 +211,7 @@ let CustomerType = new GraphQLObjectType({
                         $in: customer.service_addresses
                     }
                 }).sort({
-                    city: 1
+                    day:1
                 });
 
                 return connectionFromPromisedArray(query, args)
@@ -236,8 +246,17 @@ let schema = new GraphQLSchema({
             node: nodeField,
             customers: {
                 type: new GraphQLList(CustomerType),
-                resolve: () => {
-                    return CustomerModel.find({});
+                args: {
+                    day :{
+                        type: DayEnum
+                    }
+                },
+                resolve: (root, {day}) => {
+                    if(day != undefined){
+                        return CustomerModel.find({'billing_address.day': day});    
+                    }else{
+                        return CustomerModel.find({});    
+                    }
                 }
             },
             customer: {
@@ -254,7 +273,7 @@ let schema = new GraphQLSchema({
                         _id: fromGlobalId(id).id
                     });
                 }
-            },
+            }
         }
     })
 });
