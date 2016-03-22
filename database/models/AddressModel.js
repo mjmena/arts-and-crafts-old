@@ -5,7 +5,7 @@ import {Days} from '../../utils/enums'
 let AddressSchema = new mongoose.Schema({
   description: String,
   day: {
-    type: String,
+    type: Number,
     enums: Object.keys(Days)
   },
   street: String,

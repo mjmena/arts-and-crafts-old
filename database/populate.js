@@ -68,7 +68,7 @@ service2.save();
 
 let address = new AddressModel({
     description: 'House #1',
-    day: Days.MONDAY.name,
+    day: Days.MONDAY.value,
     street: '2152 Prospect Ave.',
     city: 'Croydon',
     state: 'PA',
@@ -78,7 +78,7 @@ let address = new AddressModel({
 
 let address2 = new AddressModel({
     description: 'House #2',
-    day: Days.TUESDAY.name,
+    day: Days.TUESDAY.value,
     street: '123 Street St.',
     city: 'Cityville',
     state: 'PA',

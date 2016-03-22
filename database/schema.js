@@ -26,7 +26,7 @@ import AddressModel from './models/AddressModel';
 import ServiceModel from './models/ServiceModel';
 import PaymentModel from './models/PaymentModel';
 
-import {Days} from '../utils/enums';
+import * as Enums from '../utils/enums';
 
 const {
     nodeInterface, nodeField
@@ -137,9 +137,9 @@ const {
 });
 
 var DayEnum = new GraphQLEnumType({
-  name: 'Day',
-  description: 'A Day of the Week',
-  values: Days
+    name: 'Day',
+    description: 'A Day of the Week',
+    values: Enums.Days
 });
 
 const AddressType = new GraphQLObjectType({
@@ -151,6 +151,9 @@ const AddressType = new GraphQLObjectType({
         },
         day: {
             type: GraphQLString,
+            resolve: (address) => {
+                return Enums.ValueToDescription(Enums.Days, address.day);
+            }
         },
         street: {
             type: GraphQLString
@@ -211,7 +214,7 @@ const CustomerType = new GraphQLObjectType({
                         $in: customer.service_addresses
                     }
                 }).sort({
-                    day:1
+                    day: 1
                 });
 
                 return connectionFromPromisedArray(query, args)
@@ -247,15 +250,20 @@ let schema = new GraphQLSchema({
             customers: {
                 type: new GraphQLList(CustomerType),
                 args: {
-                    day :{
+                    day: {
                         type: DayEnum
                     }
                 },
-                resolve: (root, {day}) => {
-                    if(day != undefined){
-                        return CustomerModel.find({'billing_address.day': day});    
-                    }else{
-                        return CustomerModel.find({});    
+                resolve: (root, {
+                    day
+                }) => {
+                    if (day != undefined) {
+                        return CustomerModel.find({
+                            'billing_address.day': day
+                        });
+                    }
+                    else {
+                        return CustomerModel.find({});
                     }
                 }
             },
@@ -272,6 +280,147 @@ let schema = new GraphQLSchema({
                     return CustomerModel.findOne({
                         _id: fromGlobalId(id).id
                     });
+                }
+            }
+        }
+    }),
+    mutation: new GraphQLObjectType({
+        name: 'Mutation',
+        fields: {
+            addCustomer: {
+                type: CustomerType,
+                args: {
+                    name: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    }
+                },
+                resolve: (obj, {
+                    name
+                }) => {
+                    console.log(name);
+                    const new_customer = new CustomerModel({
+                        name: name,
+                        active: true
+                    });
+                    new_customer.save((err) => {
+                        if(err){
+                            console.log(err)
+                        }
+                    })
+                                            
+                    return new_customer;
+                }
+            },
+            updateBillingAddress: {
+                type: AddressType,
+                args: {
+                    customer_id: {
+                        type: new GraphQLNonNull(GraphQLID)
+                    },
+                    description: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    day: {
+                        type: new GraphQLNonNull(DayEnum),
+                    },
+                    street: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    city: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    state: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    zip: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                },
+                resolve: (obj, {
+                    customer_id, description, day, street, city, state, zip
+                }) => {
+                    const new_address = new AddressModel({
+                            description: description,
+                            day:day,
+                            street: street,
+                            city: city,
+                            state: state,
+                            zip: zip
+                    });
+                    new_address.save((err) => {
+                        console.log(err)  
+                    })
+                        
+                    CustomerModel.findByIdAndUpdate(
+                        fromGlobalId(customer_id).id,
+                        {billing_address: new_address},
+                        {safe: true, new : true},
+                        function(err, model) {
+                            //console.log(err);
+                        }
+                    );
+                    
+                    return new_address;
+                }
+            },
+            addServiceAddress: {
+                type: AddressType,
+                args: {
+                    customer_id: {
+                        type: new GraphQLNonNull(GraphQLID)
+                    },
+                    description: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    day: {
+                        type: new GraphQLNonNull(DayEnum),
+                    },
+                    street: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    city: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    state: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                    zip: {
+                        type: new GraphQLNonNull(GraphQLString)
+                    },
+                },
+                resolve: (obj, {
+                    customer_id, description, day, street, city, state, zip
+                }) => {
+                    const new_address = new AddressModel({
+                            description: description,
+                            day:day,
+                            street: street,
+                            city: city,
+                            state: state,
+                            zip: zip
+                    });
+                    new_address.save((err) => {
+                        if(err) {
+                            console.log(err);
+                        }else{
+                            console.log("New Service Address added to Addresses Collection sucessfully")
+                        }
+                    });
+                        
+                    CustomerModel.findByIdAndUpdate(
+                        fromGlobalId(customer_id).id,
+                        {$push: {service_addresses: new_address}},
+                        {safe: true, new : true},
+                        function(err, model) {
+                            if(err) {
+                                console.log(err);
+                            }else{
+                                console.log("New Service Address reference added to Customer " + model.name + " sucessfully");
+                            }
+                        }
+                    );
+                    
+                    return new_address;
                 }
             }
         }
