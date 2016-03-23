@@ -1,0 +1,97 @@
+type Address implements Node {
+  id: ID!
+  description: String
+  day: String
+  street: String
+  city: String
+  state: String
+  zip: String
+  services(after: String, first: Int, before: String, last: Int): ServiceConnection
+}
+
+type AddressConnection {
+  pageInfo: PageInfo!
+  edges: [AddressEdge]
+}
+
+type AddressEdge {
+  node: Address
+  cursor: String!
+}
+
+type Customer implements Node {
+  id: ID!
+  name: String
+  billing_address: Address
+  service_addresses(after: String, first: Int, before: String, last: Int): AddressConnection
+  payments(after: String, first: Int, before: String, last: Int): PaymentConnection
+  active: Boolean
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+type Mutation {
+  addCustomer(name: String!): Customer
+  updateBillingAddress(customer_id: ID!, description: String!, day: Day!, street: String!, city: String!, state: String!, zip: String!): Address
+  addServiceAddress(customer_id: ID!, description: String!, day: Day!, street: String!, city: String!, state: String!, zip: String!): Address
+}
+
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Payment implements Node {
+  id: ID!
+  type: String
+  description: String
+  amount: Float
+  date: String
+}
+
+type PaymentConnection {
+  pageInfo: PageInfo!
+  edges: [PaymentEdge]
+}
+
+type PaymentEdge {
+  node: Payment
+  cursor: String!
+}
+
+type Query {
+  node(id: ID!): Node
+  customers(day: Day): [Customer]
+  customer(id: ID!): Customer
+}
+
+type Service implements Node {
+  id: ID!
+  description: String
+  cost: Float
+  date: String
+}
+
+type ServiceConnection {
+  pageInfo: PageInfo!
+  edges: [ServiceEdge]
+}
+
+type ServiceEdge {
+  node: Service
+  cursor: String!
+}
