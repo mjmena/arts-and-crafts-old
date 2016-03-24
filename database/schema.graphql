@@ -75,6 +75,7 @@ type PaymentEdge {
 
 type Query {
   node(id: ID!): Node
+  viewer: Viewer
   customers(day: Day): [Customer]
   customer(id: ID!): Customer
 }
@@ -94,4 +95,8 @@ type ServiceConnection {
 type ServiceEdge {
   node: Service
   cursor: String!
+}
+
+type Viewer {
+  customers: [Customer]
 }

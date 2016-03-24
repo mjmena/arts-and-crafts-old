@@ -10,7 +10,7 @@ class AppHomeRoute extends Relay.Route {
   static queries = {
     viewer: () => Relay.QL`
       query {
-        customer (id:"Q3VzdG9tZXI6NTZmMTg1MzlmOTQ1YTA2YjBkMDBjYzFl")
+        viewer
       }
     `,
   };
@@ -20,7 +20,12 @@ class App extends Component {
   render() {
     return (
       <div>
-        <div>{this.props.name}</div>
+      {this.props.viewer.customers.map((customer) => (
+        <div>
+          <div>{customer.name}</div>
+          <div>{customer.billing_address.day}</div>
+        </div>
+      ))}
       </div>
     );
   }
@@ -29,8 +34,13 @@ class App extends Component {
 const AppContainer =  Relay.createContainer(App, {
   fragments: {
     viewer: () => Relay.QL`
-      fragment on Customer {
-        name
+      fragment on Viewer {
+        customers{
+          name
+          billing_address{
+            day
+          }
+        }
       }
     `,
   },

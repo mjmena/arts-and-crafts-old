@@ -242,11 +242,37 @@ const CustomerType = new GraphQLObjectType({
     interfaces: [nodeInterface],
 });
 
+const {
+    connectionType: CustomerConnection,
+    edgeType: CustomerEdge,
+} = connectionDefinitions({
+    name: 'Customer',
+    nodeType: CustomerType
+});
+
+const ViewerType = new GraphQLObjectType({
+    name: "Viewer",
+    fields: {
+        customers: {
+            type: new GraphQLList(CustomerType),
+            resolve: (parent) => {
+                return parent;
+            }
+        }
+    }
+})
+
 let schema = new GraphQLSchema({
     query: new GraphQLObjectType({
         name: 'Query',
         fields: {
             node: nodeField,
+            viewer: {
+                type: ViewerType,
+                resolve: (root) =>{
+                    return CustomerModel.find({});
+                }
+            },
             customers: {
                 type: new GraphQLList(CustomerType),
                 args: {
@@ -303,11 +329,11 @@ let schema = new GraphQLSchema({
                         active: true
                     });
                     new_customer.save((err) => {
-                        if(err){
+                        if (err) {
                             console.log(err)
                         }
                     })
-                                            
+
                     return new_customer;
                 }
             },
@@ -340,26 +366,29 @@ let schema = new GraphQLSchema({
                     customer_id, description, day, street, city, state, zip
                 }) => {
                     const new_address = new AddressModel({
-                            description: description,
-                            day:day,
-                            street: street,
-                            city: city,
-                            state: state,
-                            zip: zip
+                        description: description,
+                        day: day,
+                        street: street,
+                        city: city,
+                        state: state,
+                        zip: zip
                     });
                     new_address.save((err) => {
-                        console.log(err)  
+                        console.log(err)
                     })
-                        
+
                     CustomerModel.findByIdAndUpdate(
-                        fromGlobalId(customer_id).id,
-                        {billing_address: new_address},
-                        {safe: true, new : true},
+                        fromGlobalId(customer_id).id, {
+                            billing_address: new_address
+                        }, {
+                            safe: true,
+                            new: true
+                        },
                         function(err, model) {
                             //console.log(err);
                         }
                     );
-                    
+
                     return new_address;
                 }
             },
@@ -392,34 +421,41 @@ let schema = new GraphQLSchema({
                     customer_id, description, day, street, city, state, zip
                 }) => {
                     const new_address = new AddressModel({
-                            description: description,
-                            day:day,
-                            street: street,
-                            city: city,
-                            state: state,
-                            zip: zip
+                        description: description,
+                        day: day,
+                        street: street,
+                        city: city,
+                        state: state,
+                        zip: zip
                     });
                     new_address.save((err) => {
-                        if(err) {
+                        if (err) {
                             console.log(err);
-                        }else{
+                        }
+                        else {
                             console.log("New Service Address added to Addresses Collection sucessfully")
                         }
                     });
-                        
+
                     CustomerModel.findByIdAndUpdate(
-                        fromGlobalId(customer_id).id,
-                        {$push: {service_addresses: new_address}},
-                        {safe: true, new : true},
+                        fromGlobalId(customer_id).id, {
+                            $push: {
+                                service_addresses: new_address
+                            }
+                        }, {
+                            safe: true,
+                            new: true
+                        },
                         function(err, model) {
-                            if(err) {
+                            if (err) {
                                 console.log(err);
-                            }else{
+                            }
+                            else {
                                 console.log("New Service Address reference added to Customer " + model.name + " sucessfully");
                             }
                         }
                     );
-                    
+
                     return new_address;
                 }
             }
