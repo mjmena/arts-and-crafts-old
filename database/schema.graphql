@@ -22,6 +22,7 @@ type AddressEdge {
 type Customer implements Node {
   id: ID!
   name: String
+  billing_day: String
   billing_address: Address
   service_addresses(after: String, first: Int, before: String, last: Int): AddressConnection
   payments(after: String, first: Int, before: String, last: Int): PaymentConnection
@@ -76,7 +77,7 @@ type PaymentEdge {
 type Query {
   node(id: ID!): Node
   viewer: Viewer
-  customers(day: Day): [Customer]
+  customers(day: Day!): [Customer]
   customer(id: ID!): Customer
 }
 

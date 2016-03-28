@@ -202,8 +202,19 @@ const CustomerType = new GraphQLObjectType({
         name: {
             type: GraphQLString
         },
+        billing_day: {
+            type: GraphQLString,
+            resolve: customer => {
+                return Enums.ValueToDescription(Enums.Days, customer.billing_day);
+            }
+        },
         billing_address: {
-            type: AddressType
+            type: AddressType,
+            resolve: customer => {
+                return AddressModel.findOne({
+                    _id: customer.billing_address
+                });
+            }
         },
         service_addresses: {
             type: AddressConnection,
@@ -242,14 +253,6 @@ const CustomerType = new GraphQLObjectType({
     interfaces: [nodeInterface],
 });
 
-const {
-    connectionType: CustomerConnection,
-    edgeType: CustomerEdge,
-} = connectionDefinitions({
-    name: 'Customer',
-    nodeType: CustomerType
-});
-
 const ViewerType = new GraphQLObjectType({
     name: "Viewer",
     fields: {
@@ -269,7 +272,7 @@ let schema = new GraphQLSchema({
             node: nodeField,
             viewer: {
                 type: ViewerType,
-                resolve: (root) =>{
+                resolve: (root) => {
                     return CustomerModel.find({});
                 }
             },
@@ -277,20 +280,15 @@ let schema = new GraphQLSchema({
                 type: new GraphQLList(CustomerType),
                 args: {
                     day: {
-                        type: DayEnum
+                        type: new GraphQLNonNull(DayEnum)
                     }
                 },
                 resolve: (root, {
                     day
                 }) => {
-                    if (day != undefined) {
-                        return CustomerModel.find({
-                            'billing_address.day': day
-                        });
-                    }
-                    else {
-                        return CustomerModel.find({});
-                    }
+                    return CustomerModel.find({
+                        billing_day: day
+                    })
                 }
             },
             customer: {
@@ -323,7 +321,6 @@ let schema = new GraphQLSchema({
                 resolve: (obj, {
                     name
                 }) => {
-                    console.log(name);
                     const new_customer = new CustomerModel({
                         name: name,
                         active: true

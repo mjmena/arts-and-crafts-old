@@ -1,14 +1,32 @@
-import 'babel-polyfill';
-
 import React, {
   Component
-} from 'react';
+}
+from 'react';
 import ReactDOM from 'react-dom';
 import Relay from 'react-relay';
 
+class App extends Component {
+  render() {
+    let customers = this.props.viewer.customers.map(customer => {
+      return (
+        <div>
+          <div>{customer.name}</div>
+          <div>{customer.billing_address.city}</div>
+        </div>
+      )
+    });
+    
+    return (
+      <div>
+        {customers}
+      </div>
+    );
+  }
+}
+
 class AppHomeRoute extends Relay.Route {
   static queries = {
-    viewer: () => Relay.QL`
+    viewer: () => Relay.QL `
       query {
         viewer
       }
@@ -16,33 +34,28 @@ class AppHomeRoute extends Relay.Route {
   };
   static routeName = 'AppHomeRoute';
 }
-class App extends Component {
-  render() {
-    return (
-      <div>
-      {this.props.viewer.customers.map((customer) => (
-        <div>
-          <div>{customer.name}</div>
-          <div>{customer.billing_address.day}</div>
-        </div>
-      ))}
-      </div>
-    );
-  }
-}
 
-const AppContainer =  Relay.createContainer(App, {
+const AppContainer = Relay.createContainer(App, {
   fragments: {
-    viewer: () => Relay.QL`
+    viewer: () => Relay.QL `
       fragment on Viewer {
         customers{
+          id
           name
           billing_address{
-            day
+            id
+            city
+          }
+          service_addresses(first:2){
+            edges{
+              node{
+                description
+                city
+              }
+            }
           }
         }
-      }
-    `,
+      }`
   },
 });
 
